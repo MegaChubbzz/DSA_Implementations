@@ -98,6 +98,7 @@ class RedBlackTree:
                 else:
                     if current_node.right is None:
                         current_node.set_child("right", node)
+                        break
                     else:
                         current_node = current_node.right
         node.color = "red"
