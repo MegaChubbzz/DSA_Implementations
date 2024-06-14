@@ -3,6 +3,8 @@ import Stack_Queue_LinkedList as queue
 class Vertex:
     def __init__(self, label):
         self.label = label
+        self.distance = 1
+        self.pred_vertex = None
 
 class Graph:
     def __init__(self):
@@ -19,6 +21,22 @@ class Graph:
     def add_undirected_edge(self, vertex_a, vertex_b, weight=1.0):
         self.add_directed_edge(vertex_a, vertex_b, weight)
         self.add_directed_edge(vertex_b, vertex_a, weight)
+
+    def get_vertex(self, vertex_label):
+        for vertex in self.adjacency_list:
+            if vertex.label == vertex_label:
+                return vertex
+        return None
+    
+    def get_vertex_list(self):
+        return list(self.adjacency_list)
+    
+    def get_incoming_edges(self, vertex):
+        incoming = []
+        for edge in self.edge_weights:
+            if edge[1] is vertex:
+                incoming.append(edge)
+        return incoming
 
 def breadth_first_search(graph, start_vertex, distances=dict()):
     discovered_set = set()
@@ -73,4 +91,91 @@ def get_shortest_path(start_vertex, end_vertex):
         path = '->' + str(current_vertex.label) + path
         current_vertex = current_vertex.pred_vertex
     path = start_vertex.label + path
+    return path
+
+def bellman_ford(graph, start_vertex):
+    for current_vertex in graph.adjacency_list:
+        current_vertex.distance = float('inf')
+        current_vertex.pred_vertex = None
+    start_vertex.distance = 0
+    for i in range(len(graph.adjacency_list) - 1):
+        for current_vertex in graph.adjacency_list:
+            for adj_vertex in graph.adjacency_list[current_vertex]:
+                edge_weight = graph.edge_weights[(current_vertex, adj_vertex)]
+                alternative_path_distance = current_vertex.distance + edge_weight
+                if alternative_path_distance < adj_vertex.distance:
+                    adj_vertex.distance = alternative_path_distance
+                    adj_vertex.pred_vertex = current_vertex
+    for current_vertex in graph.adjacency_list:
+        for adj_vertex in graph.adjacency_list[current_vertex]:
+            edge_weight = graph.edge_weights[(current_vertex, adj_vertex)]
+            alternative_path_distance = current_vertex.distance + edge_weight
+            if alternative_path_distance < adj_vertex.distance:
+                return False
+    return True
+
+def get_incoming_edge_count(edge_list, vertex):
+    count = 0
+    for (from_vertex, to_vertex) in edge_list:
+        if to_vertex is vertex:
+            count = count + 1
+    return count
+
+def topological_sort(graph):
+    result_list = []
+    no_incoming = []
+    for vertex in graph.adjacency_list.keys():
+        if get_incoming_edge_count(graph.edge_weights.keys(), vertex) == 0:
+            no_incoming.append(vertex)
+    remaining_edges = set(graph.edge_weights.keys())
+    while len(no_incoming) != 0:
+        current_vertex = no_incoming.pop()
+        result_list.append(current_vertex)
+        outgoing_edges = []
+        for to_vertex in graph.adjacency_list[current_vertex]:
+            outgoing_edge = (current_vertex, to_vertex)
+            if outgoing_edge in remaining_edges:
+                outgoing_edges.append(outgoing_edge)
+                remaining_edges.remove(outgoing_edge)
+        for (from_vertex, to_vertex) in outgoing_edges:
+            in_count = get_incoming_edge_count(remaining_edges, to_vertex)
+            if in_count == 0:
+                no_incoming.append(to_vertex)
+    return result_list
+
+def all_pairs_shortest_path(graph):
+    vertices = graph.get_vertex_list()
+    num_vertices = len(vertices)
+    dist_matrix = []
+    for i in range(0, num_vertices):
+        dist_matrix[i][i] = 0
+    for edge in graph.edge_weights:
+        dist_matrix[vertices.index(edge[0])][vertices.index(edge[1])] = graph.edge_weights[edge]
+    for k in range(0, num_vertices):
+        for toIndex in range(0, num_vertices):
+            for fromIndex in range(0, num_vertices):
+                currentLength = dist_matrix[fromIndex][toIndex]
+                possibleLength = dist_matrix[fromIndex][k] + dist_matrix[k][toIndex]
+                if possibleLength < currentLength:
+                    dist_matrix[fromIndex][toIndex] = possibleLength
+    return dist_matrix
+
+def reconstruct_path(graph, start_vertex, end_vertex, dist_matrix):
+    vertices = graph.get_vertex_list()
+    start_index = vertices.index(start_vertex)
+    path = []
+    current_index = vertices.index(end_vertex)
+    while current_index != start_index:
+        incoming_edges = graph.get_incoming_edges(vertices[current_index])
+        found_next = False
+        for current_edge in incoming_edges:
+            expected = dist_matrix[start_index][current_index] - graph.edge_weights[current_edge]
+            actual = dist_matrix[start_index][vertices.index(current_edge[0])]
+            if expected == actual:
+                current_index = vertices.index(current_edge[0])
+                path = [current_edge] + path
+                found_next = True
+                break
+        if found_next == False:
+            return None
     return path
