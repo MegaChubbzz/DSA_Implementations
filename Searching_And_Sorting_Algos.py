@@ -25,8 +25,8 @@ def binary_search(sort_this, key):
     return -1  # not found
 
 
-# Sorting algorithm
-def sort_algo(sort_this):
+# Selection sort algorithm
+def selection_sort(sort_this):
     for i in range(len(sort_this) - 1):
         index_smallest = i
         for j in range(i+1, len(sort_this)):
@@ -92,6 +92,14 @@ def partition(sort_this, start_index, end_index):
             high = high - 1
     return high
 
+#Quickselect algorithm
+def quickselect(numbers, start_index, end_index, k):
+    if start_index >= end_index:
+        return numbers[start_index]
+    low_last_index = partition(numbers, start_index, end_index)
+    if k <= low_last_index:
+        return quickselect(numbers, start_index, low_last_index, k)
+    return quickselect(numbers, low_last_index + 1, end_index, k)
 
 # Quicksort algorithm
 def quicksort(sort_this, start_index, end_index):
